@@ -9,7 +9,7 @@ DEBUG = True
 # ALLOWED_HOSTS = ['192.168.2.100','0.0.0.0']
 
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['191.238.216.168','0.0.0.0']
 
 DATABASES = {
     'default': {
