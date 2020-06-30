@@ -316,7 +316,8 @@ def upload_img(request):
             cont_atualiz = 0
             for f in fotos:
                 
-                novo_path = dir_imgs+os.path.basename(f)
+                # novo_path = dir_imgs+os.path.basename(f)
+                novo_path = dir_imgs+f.rsplit(os.sep,1)[-1]
                 if glob.glob(novo_path):
                     cont_atualiz = cont_atualiz+1
                 else:
