@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '2yoc2zy&ptn^+vwc0#9_^ovb6j$6+liv6h@)(h@_urjxqaxf%f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # ALLOWED_HOSTS = ['192.168.18.5','0.0.0.0']
 # ALLOWED_HOSTS = ['172.16.1.2','0.0.0.0']
@@ -144,7 +144,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-try:
-    from .local_settings import *
-except:
-    pass
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+
