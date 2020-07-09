@@ -25,7 +25,7 @@ def lista_sql(lista):
     return lista_sql
 
 
-def produtos_disp():
+def produtos_disp2():
 
     server = '192.168.2.11'
     db = 'ondas800'
@@ -140,14 +140,178 @@ def produtos_disp():
     
     
 
-    prods = prods.drop(columns=['ES1', 'ES2','ES3','ES4','ES5','ES6','ES7','ES8','ES9','ES10','ES11','ES2','VE1','VE2','VE3','VE4','VE5','VE6','VE7','VE8',
+    prods = prods.drop(columns=['ES1', 'ES2','ES3','ES4','ES5','ES6','ES7','ES8','ES9','ES10','ES11','ES12','VE1','VE2','VE3','VE4','VE5','VE6','VE7','VE8',
                                 'VE9','VE10','VE11','VE12'])
 
     # prods = prods.sort_values(by=['CATEGORIA_PRODUTO', 'SUBCATEGORIA_PRODUTO','DISP'],ascending=[True,True,False])
 
     conn.close()
     return prods
+def produtos_disp(periodo='Imediato'):
 
+    server = '192.168.2.11'
+    db = 'ondas800'
+    user = 'timur'
+    pwd = 'p$3dasony' 
+    conn = pyodbc.connect('DRIVER=' + DRIVER + ';SERVER=' + server + ';DATABASE=' + db + ';UID=' + user + ';PWD=' + pwd)
+
+    #seleciona somente solecoes ERP de colecoes B2B ativas
+    cols_erp = ColecaoErp.objects.filter(colecaoB2b__active=True).values_list('codigo', flat=True).distinct()
+    cols_erp = lista_sql(cols_erp)
+
+    #seleciona somente tabelas distintas que estao cadastradas nos usuarios
+    tabelas = User.objects.all().values_list('first_name', flat=True).distinct()
+    tabelas = lista_sql(tabelas)
+    
+    
+    query = """
+        select
+        --atributos produto
+        p.PRODUTO,ep.COR_PRODUTO,p.SORTIMENTO_COR,cb.DESC_COR,mc.DESC_COMPOSICAO,
+        p.COLECAO,pc.CATEGORIA_PRODUTO,psc.SUBCATEGORIA_PRODUTO,pp.CODIGO_TAB_PRECO,
+        pp.PRECO1,p.GRADE,pt.TAMANHOS_DIGITADOS,pt.TAMANHO_1,pt.TAMANHO_2,pt.TAMANHO_3,
+        pt.TAMANHO_4,pt.TAMANHO_5,pt.TAMANHO_6,pt.TAMANHO_7,pt.TAMANHO_8,
+        pt.TAMANHO_9,pt.TAMANHO_10,pt.TAMANHO_11,pt.TAMANHO_12,
+        --estoques
+        ep.ES1,ep.ES2,ep.ES3,ep.ES4,ep.ES5,ep.ES6,ep.ES7,ep.ES8,ep.ES9,ep.ES10,ep.ES11,ep.ES12,
+        --vendas-
+        SUM(vp.VE1) as VE1,sum(vp.VE2) as VE2,
+        SUM(vp.VE3) as VE3,SUM(vp.VE4) as VE4,SUM(vp.VE5) as VE5,SUM(vp.VE6) as VE6,
+        SUM(vp.VE7) as VE7,SUM(vp.VE8) as VE8,SUM(vp.VE9) as VE9,SUM(vp.VE10) as VE10,
+        SUM(vp.VE11) as VE11,SUM(vp.VE12) as VE12
+        from 
+        ESTOQUE_PRODUTOS ep left join PRODUTOS p on p.PRODUTO = ep.PRODUTO
+        left join produtos_tamanhos pt on p.GRADE=pt.GRADE
+        left join PRODUTOS_PRECOS pp on p.PRODUTO=pp.PRODUTO and pp.CODIGO_TAB_PRECO in %s
+        left join PRODUTOS_CATEGORIA pc on p.COD_CATEGORIA=pc.COD_CATEGORIA
+        left join PRODUTOS_SUBCATEGORIA psc on p.COD_SUBCATEGORIA=psc.COD_SUBCATEGORIA and p.COD_CATEGORIA=psc.COD_CATEGORIA
+        left join MATERIAIS_COMPOSICAO mc on mc.COMPOSICAO=p.COMPOSICAO
+        left join VENDAS_PRODUTO vp on ep.PRODUTO=vp.PRODUTO and vp.COR_PRODUTO=ep.COR_PRODUTO
+        left join CORES_BASICAS cb on cb.COR=ep.COR_PRODUTO
+        where 
+        ep.ESTOQUE>0 and ep.FILIAL='ONDAS' and p.COLECAO in %s
+        group by 
+        p.PRODUTO,ep.COR_PRODUTO,p.SORTIMENTO_COR,cb.DESC_COR,mc.DESC_COMPOSICAO,
+        p.COLECAO,pc.CATEGORIA_PRODUTO,psc.SUBCATEGORIA_PRODUTO,pp.CODIGO_TAB_PRECO,
+        pp.PRECO1,p.GRADE,pt.TAMANHOS_DIGITADOS,pt.TAMANHO_1,pt.TAMANHO_2,pt.TAMANHO_3,
+        pt.TAMANHO_4,pt.TAMANHO_5,pt.TAMANHO_6,pt.TAMANHO_7,pt.TAMANHO_8,
+        pt.TAMANHO_9,pt.TAMANHO_10,pt.TAMANHO_11,pt.TAMANHO_12,
+        ep.ES1,ep.ES2,ep.ES3,ep.ES4,ep.ES5,ep.ES6,ep.ES7,ep.ES8,ep.ES9,ep.ES10,ep.ES11,ep.ES12
+        order by pp.CODIGO_TAB_PRECO,p.PRODUTO,ep.COR_PRODUTO
+    """%(tabelas,cols_erp)
+
+
+    prods = pd.read_sql(query,conn)
+    
+    prods['PRODUTO'] = prods['PRODUTO'].str.strip()
+    prods['COR_PRODUTO'] = prods['COR_PRODUTO'].str.strip()
+    prods['DESC_COR'] = prods['DESC_COR'].str.strip()
+    prods['DESC_COMPOSICAO'] = prods['DESC_COMPOSICAO'].str.strip()
+    prods['COLECAO'] = prods['COLECAO'].str.strip()
+    prods['CATEGORIA_PRODUTO'] = prods['CATEGORIA_PRODUTO'].str.strip()
+    prods['SUBCATEGORIA_PRODUTO'] = prods['SUBCATEGORIA_PRODUTO'].str.strip()
+    prods['GRADE'] = prods['GRADE'].str.strip()
+    prods['TAMANHO_1'] = prods['TAMANHO_1'].str.strip()
+    prods['TAMANHO_2'] = prods['TAMANHO_2'].str.strip()
+    prods['TAMANHO_3'] = prods['TAMANHO_3'].str.strip()
+    prods['TAMANHO_4'] = prods['TAMANHO_4'].str.strip()
+    prods['TAMANHO_5'] = prods['TAMANHO_5'].str.strip()
+    prods['TAMANHO_6'] = prods['TAMANHO_6'].str.strip()
+    prods['TAMANHO_7'] = prods['TAMANHO_7'].str.strip()
+    prods['TAMANHO_8'] = prods['TAMANHO_8'].str.strip()
+    prods['TAMANHO_9'] = prods['TAMANHO_9'].str.strip()
+    prods['TAMANHO_10'] = prods['TAMANHO_10'].str.strip()
+    prods['TAMANHO_11'] = prods['TAMANHO_11'].str.strip()
+    prods['TAMANHO_12'] = prods['TAMANHO_12'].str.strip()
+    prods['CODIGO_TAB_PRECO'] = prods['CODIGO_TAB_PRECO'].astype(str)
+    prods['CODIGO_TAB_PRECO'] = prods['CODIGO_TAB_PRECO'].str.strip()
+    
+    if periodo == '30dias':
+        query_processo = """
+            select poc.PRODUTO,poc.COR_PRODUTO,p.SORTIMENTO_COR,
+            sum(poc.P1) as P1,sum(poc.P2) as P2,sum(poc.P3) as P3,sum(poc.P4) as P4,sum(poc.P5) as P5,
+            sum(poc.P6) as P6,sum(poc.P7) as P7,sum(poc.P8) as P8,sum(poc.P9) as P9,sum(poc.P10) as P10,
+            sum(poc.P11) as P11,sum(poc.P12) as P12
+            from PRODUCAO_ORDEM_COR poc left join PRODUTOS p on poc.PRODUTO=p.PRODUTO
+            where poc.QTDE_P>0
+            group by poc.PRODUTO,poc.COR_PRODUTO,p.SORTIMENTO_COR
+        """
+        processo = pd.read_sql(query_processo,conn)
+        
+        processo['PRODUTO'] = processo['PRODUTO'].str.strip()
+        processo['COR_PRODUTO'] = processo['COR_PRODUTO'].str.strip()
+        
+        processo_sort = processo[processo['SORTIMENTO_COR']==1]
+        processo_sort = processo_sort.groupby(['PRODUTO'],as_index=False).sum()
+        processo_sort['COR_PRODUTO'] = '9999'
+        processo_sort = processo_sort.drop(columns=['SORTIMENTO_COR'])
+        
+        processo_cor = processo[processo['SORTIMENTO_COR']==0]
+        processo_cor = processo_cor.drop(columns=['SORTIMENTO_COR'])
+        
+        processo = processo_cor.append(processo_sort)
+        
+        prods = pd.merge(prods,processo, on=['PRODUTO','COR_PRODUTO'],how='left')
+        prods = prods.fillna(0)
+        
+        
+        prods['D1'] = prods['P1']+prods['ES1']-prods['VE1']
+        prods['D2'] = prods['P2']+prods['ES2']-prods['VE2']
+        prods['D3'] = prods['P3']+prods['ES3']-prods['VE3']
+        prods['D4'] = prods['P4']+prods['ES4']-prods['VE4']
+        prods['D5'] = prods['P5']+prods['ES5']-prods['VE5']
+        prods['D6'] = prods['P6']+prods['ES6']-prods['VE6']
+        prods['D7'] = prods['P7']+prods['ES7']-prods['VE7']
+        prods['D8'] = prods['P8']+prods['ES8']-prods['VE8']
+        prods['D9'] = prods['P9']+prods['ES9']-prods['VE9']
+        prods['D10'] =prods['P10']+ prods['ES10']-prods['VE10']
+        prods['D11'] =prods['P11']+ prods['ES11']-prods['VE11']
+        prods['D12'] =prods['P12']+ prods['ES12']-prods['VE12']
+    else:
+        prods['D1'] = prods['ES1']-prods['VE1']
+        prods['D2'] = prods['ES2']-prods['VE2']
+        prods['D3'] = prods['ES3']-prods['VE3']
+        prods['D4'] = prods['ES4']-prods['VE4']
+        prods['D5'] = prods['ES5']-prods['VE5']
+        prods['D6'] = prods['ES6']-prods['VE6']
+        prods['D7'] = prods['ES7']-prods['VE7']
+        prods['D8'] = prods['ES8']-prods['VE8']
+        prods['D9'] = prods['ES9']-prods['VE9']
+        prods['D10'] = prods['ES10']-prods['VE10']
+        prods['D11'] = prods['ES11']-prods['VE11']
+        prods['D12'] = prods['ES12']-prods['VE12']
+
+    num = prods._get_numeric_data()
+    num[num < 0] = 0
+
+    prods['D1'] = prods['D1'].astype('Int64')
+    prods['D2'] = prods['D2'].astype('Int64')
+    prods['D3'] = prods['D3'].astype('Int64')
+    prods['D4'] = prods['D4'].astype('Int64')
+    prods['D5'] = prods['D5'].astype('Int64')
+    prods['D6'] = prods['D6'].astype('Int64')
+    prods['D7'] = prods['D7'].astype('Int64')
+    prods['D8'] = prods['D8'].astype('Int64')
+    prods['D9'] = prods['D9'].astype('Int64')
+    prods['D10'] = prods['D10'].astype('Int64')
+    prods['D11'] = prods['D11'].astype('Int64')
+    prods['D12'] = prods['D12'].astype('Int64')
+
+    prods['DISP'] = (prods['D1'] + prods['D2'] + prods['D3'] + prods['D4'] +
+         prods['D5'] + prods['D6'] + prods['D7']+prods['D8']+prods['D9']
+         +prods['D10']+prods['D11']+prods['D12'])
+    
+    prods = prods[(prods['DISP'] > 0)]
+    
+    
+
+    prods = prods.drop(columns=['ES1', 'ES2','ES3','ES4','ES5','ES6','ES7','ES8','ES9','ES10','ES11','ES12','VE1','VE2','VE3','VE4','VE5','VE6','VE7','VE8',
+                                'VE9','VE10','VE11','VE12'])
+
+    # prods = prods.sort_values(by=['CATEGORIA_PRODUTO', 'SUBCATEGORIA_PRODUTO','DISP'],ascending=[True,True,False])
+
+    conn.close()
+    return prods
 
 def df_tolist(prods):
 
@@ -219,20 +383,19 @@ def df_tolist(prods):
             p.estoque.append(estq)
         
         
-        
         prod_ant = row['PRODUTO']
 
     lista_produtos = sorted(lista_produtos, key = lambda x: (x.subcategoria, -x.estoque_tot))
 
     return lista_produtos
 
-def get_produtos(tabela,colecao,categoria,subcategoria):
+def get_produtos(tabela,colecao,categoria,subcategoria,periodo):
 
-    key = "dados"
+    key = periodo
     print('chave : ' + key)
 
     if cache.get(key) is None:
-        prods = df_tolist(produtos_disp())         
+        prods = df_tolist(produtos_disp(periodo))         
         cache.set(key, prods, 60*30)
         print('Banco')
     else:
@@ -254,14 +417,14 @@ def get_produtos(tabela,colecao,categoria,subcategoria):
     return prods
 
 
-def get_produto(produto,tabela):
+def get_produto(produto,tabela,periodo):
 
-    key = "dados"
+    key = periodo
     print('chave : ' + key)
 
     if cache.get(key) is None:
         
-        prods = df_tolist(produtos_disp()) 
+        prods = df_tolist(produtos_disp(periodo)) 
         cache.set(key, prods, 60*30)
         print('Banco')
     else:
@@ -324,7 +487,7 @@ def cats_subcats():
 
 def prods_sem_imagem():
     
-    prods = produtos_disp()
+    prods = produtos_disp('30dias')
     prods = prods[prods['CODIGO_TAB_PRECO']=='01']
 
     
@@ -335,3 +498,4 @@ def prods_sem_imagem():
             prods.drop(index, inplace=True)
     
     return prods
+
