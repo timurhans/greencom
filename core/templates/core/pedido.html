@@ -23,7 +23,8 @@
 
 {% for instance in object_list %}
 
-<b>{{ instance.produto.produto }}</b>
+
+<p><b>{{ instance.produto.produto }}</b> | Colecao : {{ instance.produto.colecao }}   |    Periodo : {{ instance.periodo }}</p>
 <table class="table table-bordered">
     <thead class="thead bg-light">
       <tr>
@@ -66,3 +67,4 @@
 <h2>Valor Total : R$ {{ valor_total }}</h2>
 </body>
 </html>
+
