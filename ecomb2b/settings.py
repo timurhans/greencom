@@ -31,7 +31,7 @@ DEBUG = False
 
 #ALLOWED_HOSTS = ['127.0.0.1']
 
-ALLOWED_HOSTS = ['191.238.216.168','0.0.0.0']
+ALLOWED_HOSTS = ['191.238.216.168','0.0.0.0','vendas.greenish.com.br']
 
 
 # Application definition
