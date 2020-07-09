@@ -42,7 +42,7 @@ def get_client_ip(request):
 def registra_log(user,ip,tipo):
     Eventos.objects.create(user = user,ip = ip, tipo = tipo)
 
-def adciona_carrinho(request):
+def adciona_carrinho(request,periodo):
 
     tabela=request.user.first_name
     session = request.COOKIES.get('sessionid')
@@ -50,7 +50,8 @@ def adciona_carrinho(request):
 
 
     produto = request.POST.get('produto')
-    pedido.produto = get_produto(produto,tabela)
+    pedido.produto = get_produto(produto,tabela,periodo)
+    pedido.periodo = periodo
     itens = []
     er_cor = r'@(.+)@'
     qtd_tot = 0
@@ -109,10 +110,13 @@ def produtos(request,path=None):
 
     if request.user.is_authenticated:
 
+        try:
+            periodo = request.GET['periodo']
+        except:
+            periodo = 'Imediato'
 
         if request.method == 'POST':
-            adciona_carrinho(request)
-
+            adciona_carrinho(request,periodo)
             return HttpResponse('<script>history.back();</script>')
 
         try:
@@ -131,7 +135,7 @@ def produtos(request,path=None):
 
         if cat != '':
             queryset = get_produtos(tabela=request.user.first_name,
-            colecao=col,categoria=cat,subcategoria=subcat)
+            colecao=col,categoria=cat,subcategoria=subcat,periodo=periodo)
         else:
             queryset = []
                 
@@ -155,6 +159,7 @@ def produtos(request,path=None):
         'selected_col' : col,
         'selected_cat' : cat,
         'selected_subcat' : subcat,
+        'selected_periodo' : periodo,
         'qtd_carrinho' : qtd_carrinho,
         'qtd_pags' : qtd_pags,
         'qtd_prods' : qtd_prods,
@@ -338,6 +343,8 @@ def upload_img(request):
 def limpa_cache(request):
     if request.user.is_authenticated:
         cache.delete("dados")
+        cache.delete("Processo")
+        cache.delete("Imediato")
         return redirect('home') 
     else:
         return redirect('/login')
