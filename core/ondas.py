@@ -190,6 +190,7 @@ def produtos_disp(periodo='Imediato'):
         left join CORES_BASICAS cb on cb.COR=ep.COR_PRODUTO
         where 
         ep.ESTOQUE>0 and ep.FILIAL='ONDAS' and p.COLECAO in %s
+        and (p.SORTIMENTO_COR=0 or (p.SORTIMENTO_COR=1 and ep.COR_PRODUTO='9999'))
         group by 
         p.PRODUTO,ep.COR_PRODUTO,p.SORTIMENTO_COR,cb.DESC_COR,mc.DESC_COMPOSICAO,
         p.COLECAO,pc.CATEGORIA_PRODUTO,psc.SUBCATEGORIA_PRODUTO,pp.CODIGO_TAB_PRECO,
