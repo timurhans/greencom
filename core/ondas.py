@@ -392,7 +392,7 @@ def df_tolist(prods):
 
 def get_produtos(tabela,colecao,categoria,subcategoria,periodo):
 
-    key = periodo
+    key = 'dados-' + periodo
     print('chave : ' + key)
 
     if cache.get(key) is None:
@@ -420,7 +420,7 @@ def get_produtos(tabela,colecao,categoria,subcategoria,periodo):
 
 def get_produto(produto,tabela,periodo):
 
-    key = periodo
+    key = 'dados-' + periodo
     print('chave : ' + key)
 
     if cache.get(key) is None:
