@@ -391,7 +391,8 @@ def df_tolist(prods):
     return lista_produtos
 
 def get_produtos(tabela,colecao,categoria,subcategoria,periodo):
-
+    
+    
     key = 'dados-' + periodo
     print('chave : ' + key)
 
@@ -419,7 +420,7 @@ def get_produtos(tabela,colecao,categoria,subcategoria,periodo):
 
 
 def get_produto(produto,tabela,periodo):
-
+    
     key = 'dados-' + periodo
     print('chave : ' + key)
 
