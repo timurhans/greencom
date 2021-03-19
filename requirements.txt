@@ -7,7 +7,7 @@ mkl-fft
 mkl-random
 numpy==1.18.1
 pandas==1.0.3
-Pillow==7.1.2
+Pillow==8.1.1
 pyodbc
 PyPDF2==1.26.0
 python-dateutil==2.8.1
